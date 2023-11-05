@@ -1,0 +1,160 @@
+--something simple with one bridge table
+CREATE TABLE Categories (
+    CategoryID INT PRIMARY KEY IDENTITY,
+    CategoryName VARCHAR(255)
+);
+
+CREATE TABLE Products (
+    ProductID INT PRIMARY KEY IDENTITY,
+    ProductName VARCHAR(255),
+    Description TEXT,
+    Picture VARBINARY(MAX) NULL
+);
+
+CREATE TABLE ProductCategories (
+    ProductCategoryID INT PRIMARY KEY IDENTITY,
+    ProductID INT,
+    CategoryID INT,
+    FOREIGN KEY (ProductID) REFERENCES Products(ProductID),
+    FOREIGN KEY (CategoryID) REFERENCES Categories(CategoryID)
+);
+
+
+--Procedures: 
+CREATE PROCEDURE AddCategory
+@CategoryName VARCHAR(255),
+@CategoryID INT OUTPUT
+AS
+BEGIN
+    INSERT INTO Categories VALUES(@CategoryName)
+
+    SET @CategoryID = SCOPE_IDENTITY();
+END
+
+
+-- AddProduct Procedure
+CREATE PROCEDURE AddProduct
+    @ProductName NVARCHAR(255),
+    @Description TEXT,
+    @Picture VARBINARY(MAX) = NULL,
+    @ProductID INT OUTPUT
+AS
+BEGIN
+    INSERT INTO Products(ProductName, Description, Picture)
+    VALUES (@ProductName, @Description, @Picture)
+
+    SET @ProductID = SCOPE_IDENTITY()
+END
+
+CREATE PROCEDURE DeleteCategory
+@CategoryId INT
+AS
+BEGIN
+    DELETE FROM Categories WHERE CategoryID = @CategoryId;
+END
+
+
+-- DeleteProduct Procedure
+CREATE PROCEDURE DeleteProduct
+    @ProductID INT
+AS
+BEGIN
+    DELETE FROM Products WHERE ProductID = @ProductID
+END
+
+CREATE PROCEDURE GetAllCategories
+AS
+BEGIN
+    SELECT * FROM Categories;
+END
+
+-- GetAllProducts Procedure
+CREATE PROCEDURE GetAllProducts
+AS
+BEGIN
+    SELECT ProductID, ProductName, Description, Picture FROM Products
+END
+
+CREATE PROCEDURE GetByIdCategory
+@CategoryId INT
+AS
+BEGIN
+    SELECT * FROM Categories WHERE CategoryID = @CategoryId;
+END
+
+-- GetByIdProduct Procedure
+CREATE PROCEDURE GetByIdProduct
+    @ProductID INT
+AS
+BEGIN
+    SELECT ProductID, ProductName, Description, Picture 
+    FROM Products 
+    WHERE ProductID = @ProductID
+END
+
+CREATE PROCEDURE GetCategoriesForProduct
+    @ProductId INT
+AS
+BEGIN
+    SELECT c.CategoryID, c.CategoryName
+    FROM Categories c
+    INNER JOIN ProductCategories pc ON pc.CategoryID = c.CategoryID
+    WHERE pc.ProductID = @ProductId
+END
+
+-- all products for a specific category
+CREATE PROCEDURE GetProductsByCategoryId
+    @CategoryID INT
+AS
+BEGIN
+    SELECT P.ProductID, P.ProductName, P.Description, P.Picture 
+    FROM Products P
+    INNER JOIN ProductCategories PC ON P.ProductID = PC.ProductID
+    WHERE PC.CategoryID = @CategoryID
+END
+
+-- Link a product to a category
+CREATE PROCEDURE LinkProductToCategory
+    @ProductID INT,
+    @CategoryID INT
+AS
+BEGIN
+    INSERT INTO ProductCategories (ProductID, CategoryID)
+    VALUES (@ProductID, @CategoryID)
+END
+
+-- Unlink a product from a category
+CREATE PROCEDURE UnlinkProductFromCategory
+    @ProductID INT,
+    @CategoryID INT
+AS
+BEGIN
+    DELETE FROM ProductCategories 
+    WHERE ProductID = @ProductID AND CategoryID = @CategoryID
+END
+
+CREATE PROCEDURE UpdateCategory
+@CategoryId INT,
+@CategoryName VARCHAR(255)
+AS
+BEGIN
+    UPDATE Categories 
+    SET CategoryName = @CategoryName
+    WHERE CategoryID = @CategoryId;
+END
+
+-- UpdateProduct Procedure
+CREATE PROCEDURE UpdateProduct
+    @ProductID INT,
+    @ProductName NVARCHAR(255),
+    @Description TEXT,
+    @Picture VARBINARY(MAX)
+AS
+BEGIN
+    UPDATE Products
+    SET 
+        ProductName = @ProductName,
+        Description = @Description,
+        Picture = @Picture
+    WHERE ProductID = @ProductID
+END
